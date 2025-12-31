@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include "netcommon.h"
+#include "tsqueue.h"
 #include "netmessage.h"
 #include "netconnection.h"
 
@@ -47,14 +48,8 @@ public:
 				if (!ec) {
 					std::cout << "Accepted Connection from " << socket.remote_endpoint().address().to_string() << "\n" << std::endl;
 					std::shared_ptr<Connection> conn = std::make_shared<Connection>(Connection::Owner::Server, asioContext, std::move(socket));
+					conn->listen();
 					connectionDequeue.push_back(conn);
-					tempMsg.msg = ((connectionDequeue.back()) -> listen());
-					tempMsg.type = MessageType::MessageAll;
-					std::cout << "Broadcasting message: " << tempMsg.msg << std::endl;	
-					for (auto& connection : connectionDequeue) {
-						connection->Send(tempMsg);
-						std::cout << "Sent to client: " << tempMsg.msg << std::endl;
-					}
 				}
 				else
 					std::cout << "Error while connecting \n" << std::endl;
@@ -63,15 +58,24 @@ public:
 			});
 	}
 
-	// void MessageAll(std::string msg, std::shared_ptr<Connection> pIgnoreClient) {
-	// 	for (auto& connection : connectionDequeue) {
-	// 		if (connection != pIgnoreClient) {
-	// 			connection->Send(tempMsg);
-	// 			std::cout << "Sent to client: " << msg << std::endl;
-	// 		}
-	// 	}
-	// 	std::cout << "Sent to all clients: " << msg << std::endl;
-	// }
+	void Update(size_t nMaxMessages = -1) {
+		for (auto& connection : connectionDequeue) {
+			if (!connection->GetIncomingMessageDequeue().empty()) {
+				auto& msg = connection->GetIncomingMessageDequeue().front();
+				MessageAll(msg, connection);
+				connection->GetIncomingMessageDequeue().pop_front();
+			}
+		}
+	}
+	void MessageAll(struct message msg, std::shared_ptr<Connection> pIgnoreClient) {
+		for (auto& connection : connectionDequeue) {
+			if (connection != pIgnoreClient) {
+				connection->Send(msg);
+				std::cout << "Sent to client: " << msg.msg << std::endl;
+			}
+		}
+		std::cout << "Sent to all clients: " << msg.msg << std::endl;
+	}
 protected:
 	boost::asio::io_context asioContext;
 	boost::asio::ip::tcp::endpoint endpoint;

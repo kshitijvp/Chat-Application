@@ -2,6 +2,7 @@
 #include "netconnection.h"
 #include "netmessage.h"
 #include "netcommon.h"
+#include "tsqueue.h"
 
 class Client
 {
