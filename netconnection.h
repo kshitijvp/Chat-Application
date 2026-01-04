@@ -32,7 +32,7 @@ public:
     void ConnectToServer(boost::asio::ip::tcp::resolver::results_type& endpoints) {
         if (parent == Owner::Client) {
             boost::asio::async_connect(socket, endpoints,
-                [this](std::error_code ec, boost::asio::ip::tcp::endpoint endpoint)
+                [&](std::error_code ec, boost::asio::ip::tcp::endpoint endpoint)
                 {
                     if (!ec) {
                         std::cout << "Connected to Server \n" << std::endl;
@@ -42,7 +42,8 @@ public:
                         std::cout << "Error occurred while connecting to server \n" << std::endl;
                 });
         }
-    }
+
+    }   
 
     bool isConnected() {
         return socket.is_open();
@@ -67,7 +68,7 @@ public:
         socket.async_read_some(boost::asio::buffer(m_readBuffer.data(), m_readBuffer.size()),
             [this](std::error_code ec, std::size_t length) {
                 if (!ec) {
-                    // Create a string from the actual bytes read
+                    // Create a string from the actual bytes read   
                     std::string receivedData(m_readBuffer.data(), length);
                     std::cout << "Received: " << receivedData << std::endl;
                     AddtoIncomingMessageDeque(receivedData);

@@ -46,7 +46,7 @@ public:
 		acceptor.async_accept(
 			[this](std::error_code ec, boost::asio::ip::tcp::socket socket) {
 				if (!ec) {
-					std::cout << "Accepted Connection from " << socket.remote_endpoint().address().to_string() << "\n" << std::endl;
+					std::cout << "Accepted Connection from " << socket.remote_endpoint() << "\n" << std::endl;
 					std::shared_ptr<Connection> conn = std::make_shared<Connection>(Connection::Owner::Server, asioContext, std::move(socket));
 					conn->listen();
 					connectionDequeue.push_back(conn);
